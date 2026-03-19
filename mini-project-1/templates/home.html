@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gym Members</title>
+</head>
+<body>
+    <h1>All Members</h1>
+
+    <ul>
+        {% for member in members %}
+            <li>
+                {{ member.name }} (Age: {{ member.age }})
+                <a href="/member/{{ member.id }}">View Details</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>

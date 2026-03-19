@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Member Details</title>
+</head>
+<body>
+
+    <h1>{{ member.name }}</h1>
+    <p>Age: {{ member.age }}</p>
+    <p>Membership: {{ member.membership_type }}</p>
+
+    <h2>Workout Sessions</h2>
+
+    <ul>
+        {% for session in member.sessions %}
+            <li>
+                {{ session.exercise }} -
+                {{ session.duration_minutes }} minutes -
+                {{ session.calories_burned }} calories
+            </li>
+        {% endfor %}
+    </ul>
+
+    <a href="/home">Back to Home</a>
+
+</body>
+</html>
