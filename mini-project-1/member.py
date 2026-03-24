@@ -1,17 +1,17 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import List
 import asyncio
 
 from models import Member
+from database import managed_db   # ✅ NEW
 
 member_router = APIRouter()
 
 templates = Jinja2Templates(directory="mini-project-1/templates")
 
-# In-memory database
-members: List[Member] = []
+# ❌ REMOVE THIS:
+# members: List[Member] = []
 
 
 # ---------------- API ENDPOINTS ----------------
@@ -19,63 +19,67 @@ members: List[Member] = []
 @member_router.get("/members/")
 async def get_members():
     await asyncio.sleep(1)
-    return members
+    with managed_db() as db:
+        return db.get_all()
 
 
 @member_router.get("/members/{member_id}")
 async def get_member(member_id: int):
-    for member in members:
-        if member.id == member_id:
-            return member
+    with managed_db() as db:
+        member = db.get(member_id)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Member with ID {member_id} was not found"
-    )
+        if member is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Member with ID {member_id} was not found"
+            )
+
+        return member
 
 
 @member_router.post("/members/")
 async def create_member(member: Member):
-    for m in members:
-        if m.id == member.id:
-            raise HTTPException(
-                status_code=400,
-                detail="Member with this ID already exists"
-            )
-
-    members.append(member)
-    return member
+    with managed_db() as db:
+        new_id = db.create(member)
+        return {"id": new_id}
 
 
 @member_router.put("/members/{member_id}")
 async def update_member(member_id: int, updated_member: Member):
-    for i, m in enumerate(members):
-        if m.id == member_id:
-            members[i] = updated_member
-            return updated_member
+    with managed_db() as db:
+        updated = db.update(member_id, updated_member)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Member with ID {member_id} not found"
-    )
+        if updated is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Member with ID {member_id} not found"
+            )
+
+        return updated
 
 
 @member_router.delete("/members/{member_id}")
 async def delete_member(member_id: int):
-    for i, m in enumerate(members):
-        if m.id == member_id:
-            return members.pop(i)
+    with managed_db() as db:
+        member = db.get(member_id)
 
-    raise HTTPException(
-        status_code=404,
-        detail=f"Member with ID {member_id} not found"
-    )
+        if member is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Member with ID {member_id} not found"
+            )
+
+        db.delete(member_id)
+        return {"message": "Deleted"}
 
 
 # ---------------- HTML ROUTES ----------------
 
 @member_router.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
+    with managed_db() as db:
+        members = db.get_all()
+
     return templates.TemplateResponse("home.html", {
         "request": request,
         "members": members
@@ -84,11 +88,13 @@ async def home(request: Request):
 
 @member_router.get("/member/{id}", response_class=HTMLResponse)
 async def get_member_page(request: Request, id: int):
-    for member in members:
-        if member.id == id:
-            return templates.TemplateResponse("member.html", {
-                "request": request,
-                "member": member
-            })
+    with managed_db() as db:
+        member = db.get(id)
 
-    raise HTTPException(status_code=404, detail="Member not found")
+        if member is None:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+    return templates.TemplateResponse("member.html", {
+        "request": request,
+        "member": member
+    })
