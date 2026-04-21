@@ -21,7 +21,7 @@ async def get_members():
     await asyncio.sleep(1)
     with managed_db() as db:
         return db.get_all()
-
+    
 
 @member_router.get("/members/{member_id}")
 async def get_member(member_id: int):
