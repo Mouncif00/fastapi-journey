@@ -39,7 +39,7 @@
     <script>
 
         // CHANGE THIS POLL ID
-        const pollId = "b9ca08d7-5148-44ff-aa9f-eae5058a055c";
+        const pollId = prompt("Enter Poll ID");
 
         const ws = new WebSocket(`ws://127.0.0.1:8000/ws/polls/${pollId}`);
 
@@ -53,35 +53,32 @@
         };
 
         async function loadPoll() {
+    const response = await fetch(
+        `http://127.0.0.1:8000/polls/${pollId}`
+    );
 
-            const response = await fetch(
-                `http://127.0.0.1:8000/polls/${pollId}`
-            );
+    const poll = await response.json();
 
-            const poll = await response.json();
+    if (!poll.options) {
+        console.error("Invalid poll:", poll);
+        return;
+    }
 
-            document.getElementById("question").innerText =
-                poll.question;
+    document.getElementById("question").innerText =
+        poll.question;
 
-            const buttonsDiv =
-                document.getElementById("buttons");
+    const buttonsDiv = document.getElementById("buttons");
+    buttonsDiv.innerHTML = "";
 
-            buttonsDiv.innerHTML = "";
+    poll.options.forEach(option => {
+        const button = document.createElement("button");
+        button.innerText = option;
+        button.onclick = () => vote(option);
+        buttonsDiv.appendChild(button);
+    });
 
-            poll.options.forEach(option => {
-
-                const button =
-                    document.createElement("button");
-
-                button.innerText = option;
-
-                button.onclick = () => vote(option);
-
-                buttonsDiv.appendChild(button);
-            });
-
-            updateResults(poll);
-        }
+    updateResults(poll);
+}
 
         function vote(option) {
 

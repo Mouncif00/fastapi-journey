@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi import Request
 
 app = FastAPI()
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory="templates")
 # Store polls in memory
 polls = {}
 
