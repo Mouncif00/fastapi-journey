@@ -2,10 +2,12 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 from typing import List
 import uuid
-
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 
 app = FastAPI()
-
+templates = Jinja2Templates(directory="app/templates")
 # Store polls in memory
 polls = {}
 
@@ -45,9 +47,15 @@ class PollCreate(BaseModel):
     options: List[str]
 
 
-@app.get("/")
-def home():
-    return {"message": "Mini Project 4 Running"}
+
+
+@app.get("/", response_class=HTMLResponse)
+async def frontend(request: Request):
+
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request}
+    )
 
 
 # CREATE POLL

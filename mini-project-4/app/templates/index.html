@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Poll</title>
+
+    <style>
+
+        body {
+            font-family: Arial;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #results {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <h1>Real-Time Poll</h1>
+
+    <h2 id="question"></h2>
+
+    <div id="buttons"></div>
+
+    <div id="results"></div>
+
+    <script>
+
+        // CHANGE THIS POLL ID
+        const pollId = "b9ca08d7-5148-44ff-aa9f-eae5058a055c";
+
+        const ws = new WebSocket(`ws://127.0.0.1:8000/ws/polls/${pollId}`);
+
+        ws.onmessage = function(event) {
+
+            const data = JSON.parse(event.data);
+
+            const poll = data.poll;
+
+            updateResults(poll);
+        };
+
+        async function loadPoll() {
+
+            const response = await fetch(
+                `http://127.0.0.1:8000/polls/${pollId}`
+            );
+
+            const poll = await response.json();
+
+            document.getElementById("question").innerText =
+                poll.question;
+
+            const buttonsDiv =
+                document.getElementById("buttons");
+
+            buttonsDiv.innerHTML = "";
+
+            poll.options.forEach(option => {
+
+                const button =
+                    document.createElement("button");
+
+                button.innerText = option;
+
+                button.onclick = () => vote(option);
+
+                buttonsDiv.appendChild(button);
+            });
+
+            updateResults(poll);
+        }
+
+        function vote(option) {
+
+            ws.send(JSON.stringify({
+                option: option
+            }));
+        }
+
+        function updateResults(poll) {
+
+            const resultsDiv =
+                document.getElementById("results");
+
+            resultsDiv.innerHTML = "";
+
+            for (const option in poll.votes) {
+
+                resultsDiv.innerHTML +=
+                    `<p>${option}: ${poll.votes[option]}</p>`;
+            }
+        }
+
+        loadPoll();
+
+    </script>
+
+</body>
+</html>
